@@ -197,9 +197,17 @@ displayListCountdown = mp.add_periodic_timer(1, function()
         displayListCountdown:kill()
 				clear_ass_text()
     else
-			draw_ass_text(string.format("%s\\N\\h{\\bord0.5\\3a&HA6&} Hiding in %d ..",displayListString, 5 - displayListCountdownElapsed) )
+			draw_ass_text(string.format("%s\\N\\h\\hHiding in %d ..",displayListString, 5 - displayListCountdownElapsed) )
 		end
 end)
+
+function unichr(ord)
+    if ord == nil then return nil end
+    if ord < 32 then return string.format('\\x%02x', ord) end
+    if ord < 126 then return string.char(ord) end
+    if ord < 65539 then return string.format("\\u%04x", ord) end
+    if ord < 1114111 then return string.format("\\u%08x", ord) end
+end
 
 mp.register_script_message("bookmark-list", function(slot)
   local bookmarks, error = loadTable(getConfigFile())
@@ -208,7 +216,7 @@ mp.register_script_message("bookmark-list", function(slot)
     mp.osd_message("Error: " .. error)
     return
   end
-	displayListString = "{\\bord0.5\\b1\\c&HFFFFFF&}{\\3c&H000000&\\4c&H000000&}\\h\\N"
+	displayListString = "{\\fnSource Sans Pro\\b1\\fs12\\bord0.7\\c&HFFFFFF&\\1a&H00&\\3c&H000000&\\3a&H00&\\4c&H000000&\\4a&HFF&}\\h\\N\\h\\hBookmark list:\\N"
 	local bookmarkCount = tablelength(bookmarks)
 	print("List of bookmarks:")
 	for i=1,bookmarkCount,1
@@ -216,17 +224,17 @@ mp.register_script_message("bookmark-list", function(slot)
 		local fileName = getSafeString(bookmarks[tostring(i)],"filename")
 		local path     = getSafeString(bookmarks[tostring(i)],"filepath")
 		local pos      = getSafeInt(bookmarks[tostring(i)],"pos")
-		local customStyle = "{\\bord0.5\\3a&HA6&}"
+		local preSpace = "\\h{\\1a&HFF&\\3a&HFF&}" .. "►" .. "{\\1a&H00&\\3a&H00&}\\h"
 		if string.lower(fileName) == string.lower(curFileName) then
-			customStyle = "{\\bord1\\3a&H00&}"
+			preSpace = "\\h{\\1a&H00&\\3a&H00&}" .. "►" .. "{\\1a&H00&\\3a&H00&}\\h"
 		end
 		print(string.format("[%d] %s [%s]\\N", i, fileName, timestamp(pos)))
-		displayListString = displayListString .. string.format("\\h\\h\\h%s[%d] %s [%s]\\N", customStyle, i, fileName, timestamp(pos))
+		displayListString = displayListString .. string.format("%s[Alt-%d] %s [%s]\\N",preSpace, i, fileName, timestamp(pos))
 	end
 
 	ass = assdraw.ass_new()
 	ass:pos(0, 0)
-	ass:append(displayListString .. "\\N\\h{\\bord0.5\\3a&HA6&} Hiding in 5 ..")
+	ass:append(displayListString .. "\\N\\h\\hHiding in 5 ..")
 	mp.set_osd_ass(0, 0, ass.text)
 
 	displayListCountdownElapsed = 0
