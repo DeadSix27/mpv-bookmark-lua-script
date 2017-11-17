@@ -1,3 +1,5 @@
+local assdraw = require "mp.assdraw"
+
 --// Save/Load string serializer function
 function exportstring( s )
   return string.format("%q", s)
@@ -102,7 +104,7 @@ end
 
 --// default file to save/load bookmarks to/from
 function getConfigFile()
-  return os.getenv("HOME") .. "/.config/mpv/bookmarks.json"
+	os.getenv('APPDATA') .. "\\mpv-bookmarks.json"
 end
 
 --// check whether a file exists or not
@@ -141,9 +143,75 @@ function bookmarkToCurrentPosition(bookmark, tryToLoadFile)
   end
 end
 
+function timestamp(duration)
+    -- mpv may return nil before exiting.
+    if not duration then return "" end
+    local hours = duration / 3600
+    local minutes = duration % 3600 / 60
+    local seconds = duration % 60
+    return string.format("%02d:%02d:%06.03f", hours, minutes, seconds)
+end
+
+function clear_ass_text()
+    mp.set_osd_ass(0, 0, "")
+end
+
+function draw_ass_text(text)
+	ass = assdraw.ass_new()
+	ass:pos(0, 0)
+	ass:append(text)
+	mp.set_osd_ass(0, 0, ass.text)
+end
+
+function tablelength(T)
+  local count = 0
+  for _ in pairs(T) do count = count + 1 end
+  return count
+end
+
+local displayListCountdownElapsed = 6
+local displayListString = ""
+
+displayListCountdown = mp.add_periodic_timer(1, function()
+    displayListCountdownElapsed = displayListCountdownElapsed + 1
+    if displayListCountdownElapsed >= 5 then
+        displayListCountdown:kill()
+				clear_ass_text()
+    else
+			draw_ass_text(string.format("%s\\N Hiding in %d ..",displayListString, 5 - displayListCountdownElapsed) )
+		end
+end)
+
+mp.register_script_message("bookmark-list", function(slot)
+  local bookmarks, error = loadTable(getConfigFile())
+  if error ~= nil then
+    mp.osd_message("Error: " .. error)
+    return
+  end
+	displayListString = "{\\b1\\c&H000000&}{\\3c&HFFFFFF&\\4c&HFFFFFF&}"
+	local bookmarkCount = tablelength(bookmarks)
+	print("List of bookmarks:")
+	for i=1,bookmarkCount,1
+	do
+		local fileName = bookmarks[tostring(i)]["filename"]
+		local path     = bookmarks[tostring(i)]["filepath"]
+		local pos      = bookmarks[tostring(i)]["pos"]
+		print(string.format("[%d] %s [%s]\\N", i, fileName, timestamp(pos)))
+		displayListString = displayListString .. string.format("[%d] %s [%s]\\N", i, fileName, timestamp(pos))
+	end
+
+	ass = assdraw.ass_new()
+	ass:pos(0, 0)
+	ass:append(displayListString .. "\\N Hiding in 5 ..")
+	mp.set_osd_ass(0, 0, ass.text)
+
+	displayListCountdownElapsed = 0
+	displayListCountdown:resume()
+end)
 
 --// handle "bookmark-set" function triggered by a key in "input.conf"
 mp.register_script_message("bookmark-set", function(slot)
+  print("Saving " .. slot )
   local bookmarks, error = loadTable(getConfigFile())
   if error ~= nil then
     bookmarks = {}
