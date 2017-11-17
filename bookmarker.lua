@@ -104,7 +104,7 @@ end
 
 --// default file to save/load bookmarks to/from
 function getConfigFile()
-	os.getenv('APPDATA') .. "\\mpv-bookmarks.json"
+  return os.getenv('APPDATA') .. "\\mpv-bookmarks.json"
 end
 
 --// check whether a file exists or not
@@ -169,6 +169,25 @@ function tablelength(T)
   return count
 end
 
+-- local inspect = require 'inspect' # for debugging
+
+function getSafeString(array,key)
+  local arrayKey = array[key]
+	if arrayKey == nil then
+		return "-"
+	else
+		return arrayKey
+	end
+end
+function getSafeInt(array,key)
+  local arrayKey = array[key]
+	if arrayKey == nil then
+		return 0
+	else
+		return arrayKey
+	end
+end
+
 local displayListCountdownElapsed = 6
 local displayListString = ""
 
@@ -178,31 +197,36 @@ displayListCountdown = mp.add_periodic_timer(1, function()
         displayListCountdown:kill()
 				clear_ass_text()
     else
-			draw_ass_text(string.format("%s\\N Hiding in %d ..",displayListString, 5 - displayListCountdownElapsed) )
+			draw_ass_text(string.format("%s\\N\\h{\\bord0.5\\3a&HA6&} Hiding in %d ..",displayListString, 5 - displayListCountdownElapsed) )
 		end
 end)
 
 mp.register_script_message("bookmark-list", function(slot)
   local bookmarks, error = loadTable(getConfigFile())
+	local curFileName = mp.get_property_osd("filename")
   if error ~= nil then
     mp.osd_message("Error: " .. error)
     return
   end
-	displayListString = "{\\b1\\c&H000000&}{\\3c&HFFFFFF&\\4c&HFFFFFF&}"
+	displayListString = "{\\bord0.5\\b1\\c&HFFFFFF&}{\\3c&H000000&\\4c&H000000&}\\h\\N"
 	local bookmarkCount = tablelength(bookmarks)
 	print("List of bookmarks:")
 	for i=1,bookmarkCount,1
 	do
-		local fileName = bookmarks[tostring(i)]["filename"]
-		local path     = bookmarks[tostring(i)]["filepath"]
-		local pos      = bookmarks[tostring(i)]["pos"]
+		local fileName = getSafeString(bookmarks[tostring(i)],"filename")
+		local path     = getSafeString(bookmarks[tostring(i)],"filepath")
+		local pos      = getSafeInt(bookmarks[tostring(i)],"pos")
+		local customStyle = "{\\bord0.5\\3a&HA6&}"
+		if string.lower(fileName) == string.lower(curFileName) then
+			customStyle = "{\\bord1\\3a&H00&}"
+		end
 		print(string.format("[%d] %s [%s]\\N", i, fileName, timestamp(pos)))
-		displayListString = displayListString .. string.format("[%d] %s [%s]\\N", i, fileName, timestamp(pos))
+		displayListString = displayListString .. string.format("\\h\\h\\h%s[%d] %s [%s]\\N", customStyle, i, fileName, timestamp(pos))
 	end
 
 	ass = assdraw.ass_new()
 	ass:pos(0, 0)
-	ass:append(displayListString .. "\\N Hiding in 5 ..")
+	ass:append(displayListString .. "\\N\\h{\\bord0.5\\3a&HA6&} Hiding in 5 ..")
 	mp.set_osd_ass(0, 0, ass.text)
 
 	displayListCountdownElapsed = 0
