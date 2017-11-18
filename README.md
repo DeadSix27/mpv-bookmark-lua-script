@@ -1,4 +1,5 @@
-## mpv-bookmarker <img src="https://cloud.githubusercontent.com/assets/8236909/9288343/8b64fb36-434a-11e5-980c-bd2cf67cb0a2.jpg" width="30">
+## mpv-bookmarker ![Alt text](https://github.com/mpv-player/mpv/raw/master/etc/mpv-icon-8bit-32x32.png)
+
 #### mpv-bookmarker is a lua script for mpv to to set bookmark on your favorite moments of certain media files 
 
 ###### Usage
