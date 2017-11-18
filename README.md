@@ -14,4 +14,10 @@ Alt+2  script_message bookmark-load 2
 * There is no limit to slots. (the whole bookmark data will be kept in file `~/.config/mpv/bookmarks.json`)
 
 ###### Tested
-* Has been tested on Linux and macOS
+* Has been tested on Windows ([Original](https://github.com/nimatrueway/mpv-bookmark-lua-script) has been tested on MacOS/Linux)
+
+##### Modifications by @DeadSix27
+
+Added crude bookmark list display (ctrl-b):
+
+![BookmarklistScreenshot](bookmarklistscreenshot.png?raw=true "BookmarklistScreenshot")
